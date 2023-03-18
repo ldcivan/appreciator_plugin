@@ -121,6 +121,7 @@ export class example extends plugin {
         let result_data = jsonobj.data[0].confidences
         
         const output = result_data
+          .filter(item => !item.label.startsWith("rating:"))
           .map(item => `${item.label}: ${item.confidence.toFixed(4)}`)
           .join(", ");
         
