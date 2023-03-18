@@ -8,6 +8,9 @@ import path from 'path'
 import { createRequire } from "module";
 const require = createRequire(import.meta.url)
 
+if (!fs.existsSync("plugins/example/appreciator/")) {
+    fs.mkdirSync("plugins/example/appreciator/");
+}
 
 export class example extends plugin {
     constructor() {
@@ -86,13 +89,14 @@ export class example extends plugin {
          
             return data;
         }
+        let body = await page.$('img')
         //Usage example using await:
-        await await page.screenshot({
-            path: `./plugins/example/appreciate.jpeg`,
-            fullPage: true
-        })
+        await this.reply(segment.image(await body.screenshot({
+            path: `plugins/example/appreciator/appreciator.jpeg`,
+            //fullPage: true
+        })))
         
-        let img_b64 = await tob64(`./plugins/example/appreciate.jpeg`) ;
+        let img_b64 = await tob64(`plugins/example/appreciator/appreciator.jpeg`) ;
         //console.log(img_b64);
 
         
