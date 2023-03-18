@@ -78,6 +78,10 @@ export class example extends plugin {
                'networkidle2'           //在 500ms 内网络连接个数不超过 2 个
            ]
         });
+        await page.setViewport({
+            width: 2560,
+            height: 1340
+        });
 
         
         function tob64(file) {
