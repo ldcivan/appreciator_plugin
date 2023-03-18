@@ -91,10 +91,10 @@ export class example extends plugin {
         }
         let body = await page.$('img')
         //Usage example using await:
-        await this.reply(segment.image(await body.screenshot({
+        await body.screenshot({
             path: `plugins/example/appreciator/appreciator.jpeg`,
             //fullPage: true
-        })))
+        })
         
         let img_b64 = await tob64(`plugins/example/appreciator/appreciator.jpeg`) ;
         //console.log(img_b64);
