@@ -124,7 +124,7 @@ export class example extends plugin {
         
         let result_data = jsonobj.data[0].confidences
         
-        if (e.msg.search(/((不|免|无)(加权|权重))?/s) == -1){
+        if (e.msg.search(/((不|免|无)(加权|权重))/s) == -1){
             const output = result_data
               .filter(item => !item.label.startsWith("rating:"))
               .map(item => `(${item.label}: ${((item.confidence-0.5)*2+0.5).toFixed(2)})`)
