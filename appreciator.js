@@ -20,8 +20,12 @@ export class example extends plugin {
             priority: 5000,
             rule: [
                 {
-                    reg: '^#?鉴赏$',
+                    reg: '^#?((不|免|无)(加权|权重))?鉴赏$',
                     fnc: 'appreciate'
+                },
+                {
+                    reg: '^#?鉴赏帮助$',
+                    fnc: 'appreciate_help'
                 }
             ]
         })
@@ -120,12 +124,20 @@ export class example extends plugin {
         
         let result_data = jsonobj.data[0].confidences
         
-        const output = result_data
-          .filter(item => !item.label.startsWith("rating:"))
-          .map(item => `${item.label}: ${item.confidence.toFixed(4)}`)
-          .join(", ");
-        
-        await this.reply(`${output}`)
+        if (e.msg.search(/((不|免|无)(加权|权重))?/s) == -1){
+            const output = result_data
+              .filter(item => !item.label.startsWith("rating:"))
+              .map(item => `(${item.label}: ${((item.confidence-0.5)*2+0.5).toFixed(2)})`)
+              .join(", ");
+            await this.reply(`以下是加权后的tag分析结果：\n${output}`)
+        }
+        else{
+            const output = result_data
+              .filter(item => !item.label.startsWith("rating:"))
+              .map(item => `${item.label}`)
+              .join(", ");
+            await this.reply(`以下是不含加权的tag分析结果：\n${output}`)
+        }
     }
     
 
