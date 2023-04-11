@@ -51,7 +51,7 @@ export class example extends plugin {
           }
         }
         if (!e.img) {
-            await this.cancel(e);
+            await this.reply("未包含图片，请回复图片或带图片再发送命令");
             // return true;
             return false;
         }
@@ -127,14 +127,14 @@ export class example extends plugin {
         if (e.msg.search(/((不|免|无)(加权|权重))/s) == -1){
             const output = result_data
               .filter(item => !item.label.startsWith("rating:"))
-              .map(item => `(${item.label}: ${((item.confidence-0.5)*2+0.5).toFixed(2)})`)
+              .map(item => `(${item.label.replace(/_/g, ' ')}: ${((item.confidence-0.5)*2+0.5).toFixed(2)})`)
               .join(", ");
             await this.reply(`以下是加权后的tag分析结果：\n${output}`)
         }
         else{
             const output = result_data
               .filter(item => !item.label.startsWith("rating:"))
-              .map(item => `${item.label}`)
+              .map(item => `${item.label.replace(/_/g, ' ')}`)
               .join(", ");
             await this.reply(`以下是不含加权的tag分析结果：\n${output}`)
         }
