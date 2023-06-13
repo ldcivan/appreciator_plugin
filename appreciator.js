@@ -1,4 +1,3 @@
-// 本插件已因api结构更改而作废，请不要再使用
 import plugin from '../../lib/plugins/plugin.js'
 import fs from 'fs'
 import { segment } from "oicq";
@@ -21,12 +20,12 @@ export class example extends plugin {
             priority: 5000,
             rule: [
                 {
-                    reg: '^#?((不|免|无)(加权|权重))?鉴赏$',
-                    fnc: 'appreciate'
-                },
-                {
                     reg: '^#?鉴赏帮助$',
                     fnc: 'appreciate_help'
+                },
+                {
+                    reg: '^#?((不|免|无)(加权|权重))?鉴赏.*$',
+                    fnc: 'appreciate'
                 }
             ]
         })
@@ -56,8 +55,11 @@ export class example extends plugin {
             // return true;
             return false;
         }
+        const regex = /\d+\.\d+/; // 匹配文本中的数字
+        const match = e.msg.match(regex);
+        const limit = match ? parseFloat(match[0]) : 0.6;
         var imageURL=e.img[0];
-        
+        /*
         let data = {
           "fn_index": 0,
           "data": ['', 0.5],
@@ -72,32 +74,55 @@ export class example extends plugin {
             data.data[0] = dataURI;
           })
           .catch(error => console.error(error));
+        */
         
-        var url = 'https://hysts-deepdanbooru.hf.space/api/predict'
-        const response = await fetch(url, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: data, timeout: 10000});
-        var jsonobj = await response.json();
-        console.log(JSON.stringify(response));
+        try {
+            var url = `https://nsfwtag.azurewebsites.net/api/tag?limit=${limit}&url=${imageURL}`
+            const response = await fetch(url, { method: "GET", headers: { 'Content-Type': 'application/json' }, timeout: 10000});
+            var jsonobj = await response.json();
+            console.log(JSON.stringify(jsonobj));
+        }
+        catch(error) {
+            console.error(error); // 记录错误信息
+            e.reply("鉴赏失败，可能是与api通信异常："+error)
+            return false; // 返回 false
+        }
         
         //await this.reply(JSON.stringify(jsonobj.results))
         
-        let result_data = jsonobj.data[0].confidences
+        let result_data = jsonobj;
         
-        if (e.msg.search(/((不|免|无)(加权|权重))/s) == -1){
-            const output = result_data
-              .filter(item => !item.label.startsWith("rating:"))
-              .map(item => `(${item.label.replace(/_/g, ' ')}: ${((item.confidence-0.5)*2+0.5).toFixed(2)})`)
-              .join(", ");
-            await this.reply(`以下是加权后的tag分析结果：\n${output}`)
+        try {
+            if (e.msg.search(/((不|免|无)(加权|权重))/s) == -1){
+                let output = "";
+                for (let key in result_data) {
+                  if (key.startsWith("rating:")) continue;
+                  const tag = key.replaceAll("_", " ");
+                  const value = result_data[key].toFixed(2);
+                  output += `${tag}: ${value}, `;
+                }
+                output = output.slice(0, -1).slice(0, -1); // 去除最后一个逗号
+                await this.reply(`以下是加权后的tag分析结果：\n${output}`)
+            }
+            else{
+                let output = "";
+                for (let key in result_data) {
+                  if (key.startsWith("rating:")) continue;
+                  const tag = key.replaceAll("_", " ");
+                  output += `${tag}, `;
+                }
+                output = output.slice(0, -1).slice(0, -1); // 去除最后一个逗号
+                await this.reply(`以下是不含加权的tag分析结果：\n${output}`)
+            }
         }
-        else{
-            const output = result_data
-              .filter(item => !item.label.startsWith("rating:"))
-              .map(item => `${item.label.replace(/_/g, ' ')}`)
-              .join(", ");
-            await this.reply(`以下是不含加权的tag分析结果：\n${output}`)
+        catch(error) {
+            console.error(error); // 记录错误信息
+            e.reply("鉴赏失败，解析tag时发生异常："+error)
+            return false; // 返回 false
         }
     }
     
-
-
+    async appreciate_help(e) {
+        e.reply("发送命令 #鉴赏 或 #无权重鉴赏 即可获取图片可能包含的tag\n在命令后加0~1之间的浮点数可自定义返回的tag的权重最低值（该值未设定时默认为0.6）");
+    }
 }
