@@ -1,3 +1,4 @@
+// 本插件已因api结构更改而作废，请不要再使用
 import plugin from '../../lib/plugins/plugin.js'
 import fs from 'fs'
 import { segment } from "oicq";
@@ -57,68 +58,25 @@ export class example extends plugin {
         }
         var imageURL=e.img[0];
         
-        
-        const puppeteer = require('puppeteer');
-
-        const browser = await puppeteer.launch({
-            headless: true,
-            args: [
-                '--disable-gpu',
-                '--disable-dev-shm-usage',
-                '--disable-setuid-sandbox',
-                '--no-first-run',
-                '--no-sandbox',
-                '--no-zygote',
-                '--single-process'
-              ]
-        });
-        const page = await browser.newPage();
-        await page.goto(imageURL, {
-           timeout: 30 * 1000,
-           waitUntil: [
-               'load',                       //等待 “load” 事件触发
-               'domcontentloaded',  //等待 “domcontentloaded” 事件触发
-               'networkidle0',          //在 500ms 内没有任何网络连接
-               'networkidle2'           //在 500ms 内网络连接个数不超过 2 个
-           ]
-        });
-        await page.setViewport({
-            width: 2560,
-            height: 1340
-        });
-
-        
-        function tob64(file) {
-            let filePath = path.resolve(file); // 原始文件地址
-         
-            // 读取文件数据
-            let data = fs.readFileSync(filePath);
-            data = Buffer.from(data).toString('base64');
-         
-            return data;
-        }
-        let body = await page.$('img')
-        //Usage example using await:
-        await body.screenshot({
-            path: `plugins/example/appreciator/appreciator.jpeg`,
-            //fullPage: true
-        })
-        
-        let img_b64 = await tob64(`plugins/example/appreciator/appreciator.jpeg`) ;
-        //console.log(img_b64);
-
-        
-    
-        await browser.close();
-        
+        let data = {
+          "fn_index": 0,
+          "data": ['', 0.5],
+        };
+        fetch(imageURL)
+          .then(res => res.blob())
+          .then(async (blob) => {
+            const buffer = await blob.arrayBuffer();
+            const base64 = buffer.toString('base64');
+            const mimeType = res.headers.get('content-type');
+            const dataURI = `data:${mimeType};base64,${base64}`;
+            data.data[0] = dataURI;
+          })
+          .catch(error => console.error(error));
         
         var url = 'https://hysts-deepdanbooru.hf.space/api/predict'
-        let data = {
-            "fn_index": 0,
-            "data": [`data:image/jpeg;base64,${img_b64}`, 0.5],
-        }
-        const response = await fetch(url, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data), timeout: 10000});
+        const response = await fetch(url, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: data, timeout: 10000});
         var jsonobj = await response.json();
+        console.log(JSON.stringify(response));
         
         //await this.reply(JSON.stringify(jsonobj.results))
         
