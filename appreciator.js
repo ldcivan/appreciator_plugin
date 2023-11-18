@@ -55,9 +55,19 @@ export class example extends plugin {
             // return true;
             return false;
         }
-        const regex = /\d+\.\d+/; // 匹配文本中的数字
+        const regex = /^\d+(\.\d+)?$/; // 匹配文本中的数字
         const match = e.msg.match(regex);
         const limit = match ? parseFloat(match[0]) : 0.6;
+        let version= "v2/tag";
+        if (e.msg.includes('v1')) {
+            version = 'v1/tag';
+        } else if (e.msg.includes('v2')) {
+            version = 'v2/tag';
+        } else if (e.msg.includes('v3')) {
+            version = 'v3/tag';
+        } else if (e.msg.includes('nsfw')) {
+            version = 'v1/nsfw';
+        }
         var imageURL=e.img[0];
         /*
         let data = {
@@ -77,7 +87,14 @@ export class example extends plugin {
         */
         
         try {
-            var url = `https://nsfwtag.azurewebsites.net/api/tag?limit=${limit}&url=${imageURL}`
+            var url;
+            if (version != 'v1/nsfw') {
+                url = `https://savor.pro-ivan.cn/api/${version}?limit=${limit}&url=${imageURL}`
+            }
+            else {
+                const image_dim = match ? parseFloat(match[0]) : 224;
+                url = `https://savor.pro-ivan.cn/api/${version}?image_dim=${image_dim}&urls=${e.img}`
+            }
             const response = await fetch(url, { method: "GET", headers: { 'Content-Type': 'application/json' }, timeout: 10000});
             var jsonobj = await response.json();
             console.log(JSON.stringify(jsonobj));
@@ -92,37 +109,46 @@ export class example extends plugin {
         
         let result_data = jsonobj;
         
-        try {
-            if (e.msg.search(/((不|免|无)(加权|权重))/s) == -1){
-                let output = "";
-                for (let key in result_data) {
-                  if (key.startsWith("rating:")) continue;
-                  const tag = key.replaceAll("_", " ");
-                  const value = result_data[key].toFixed(2);
-                  output += `${tag}: ${value}, `;
+        if (version != 'v1/nsfw') {
+            try {
+                if (e.msg.search(/((不|免|无)(加权|权重))/s) == -1){
+                    let output = "";
+                    for (let key in result_data) {
+                      if (key.startsWith("rating:")) continue;
+                      const tag = key.replaceAll("_", " ");
+                      const value = result_data[key].toFixed(2);
+                      output += `${tag}: ${value}, `;
+                    }
+                    output = output.slice(0, -1).slice(0, -1); // 去除最后一个逗号
+                    await this.reply(`以下是加权后的tag分析结果：\n${output}`)
                 }
-                output = output.slice(0, -1).slice(0, -1); // 去除最后一个逗号
-                await this.reply(`以下是加权后的tag分析结果：\n${output}`)
+                else{
+                    let output = "";
+                    for (let key in result_data) {
+                      if (key.startsWith("rating:")) continue;
+                      const tag = key.replaceAll("_", " ");
+                      output += `${tag}, `;
+                    }
+                    output = output.slice(0, -1).slice(0, -1); // 去除最后一个逗号
+                    await this.reply(`以下是不含加权的tag分析结果：\n${output}`)
+                }
             }
-            else{
-                let output = "";
-                for (let key in result_data) {
-                  if (key.startsWith("rating:")) continue;
-                  const tag = key.replaceAll("_", " ");
-                  output += `${tag}, `;
-                }
-                output = output.slice(0, -1).slice(0, -1); // 去除最后一个逗号
-                await this.reply(`以下是不含加权的tag分析结果：\n${output}`)
+            catch(error) {
+                console.error(error); // 记录错误信息
+                e.reply("鉴赏失败，解析tag时发生异常："+error)
+                return false; // 返回 false
             }
         }
-        catch(error) {
-            console.error(error); // 记录错误信息
-            e.reply("鉴赏失败，解析tag时发生异常："+error)
-            return false; // 返回 false
+        else {
+            let output = "";
+            for(let index = 0; index < result_data.length; index++) {
+                output += `${index+1}.\n中立内容：${(result_data[index]['neutral']*100).toFixed(2)}%\n绘画内容：${(result_data[index]['drawings']*100).toFixed(2)}%\n不适合内容：${(result_data[index]['sexy']*100).toFixed(2)}%\n动漫色情：${(result_data[index]['hentai']*100).toFixed(2)}%\n写实色情：${(result_data[index]['porn']*100).toFixed(2)}%\n\n`;
+            }
+            await e.reply(output);
         }
     }
     
     async appreciate_help(e) {
-        e.reply("发送命令 #鉴赏 或 #无权重鉴赏 即可获取图片可能包含的tag\n在命令后加0~1之间的浮点数可自定义返回的tag的权重最低值（该值未设定时默认为0.6）");
+        e.reply("发送命令 #鉴赏 或 #无权重鉴赏 即可获取图片可能包含的tag\n在命令后加0~1之间的浮点数可自定义返回的tag的权重最低值（该值未设定时默认为0.6）\n现在可以在命令中注明要使用的功能模型，现在支持：v1-第一代tag鉴赏 v2-第二代tag鉴赏 nsfw-图片色情程度鉴定，默认值为v2\n例子：#无权重鉴赏 v1 0.75 Bot会参考v1模型返回图片的不带权重值的tag，且返回的tag的权重值都是大于0.75的");
     }
 }
