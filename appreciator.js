@@ -69,6 +69,7 @@ export class example extends plugin {
             version = 'v1/nsfw';
         }
         var imageURL=e.img[0];
+        const ero_threshold = 0.6; //鉴黄，色图阈值
         /*
         let data = {
           "fn_index": 0,
@@ -142,7 +143,7 @@ export class example extends plugin {
         else {
             let output = "";
             for(let index = 0; index < result_data.length; index++) {
-                output += `${index+1}.\n中立内容：${(result_data[index]['neutral']*100).toFixed(2)}%\n绘画内容：${(result_data[index]['drawings']*100).toFixed(2)}%\n不适合内容：${(result_data[index]['sexy']*100).toFixed(2)}%\n动漫色情：${(result_data[index]['hentai']*100).toFixed(2)}%\n写实色情：${(result_data[index]['porn']*100).toFixed(2)}%\n\n`;
+                output += `${index+1}. ${result_data[index]['sexy']+result_data[index]['porn']+result_data[index]['hentai']>ero_threshold?'我艹快存，别让狗管理看见了':'哼，一般'}\n中立内容：${(result_data[index]['neutral']*100).toFixed(2)}%\n绘画内容：${(result_data[index]['drawings']*100).toFixed(2)}%\n不适合内容：${(result_data[index]['sexy']*100).toFixed(2)}%\n动漫色情：${(result_data[index]['hentai']*100).toFixed(2)}%\n写实色情：${(result_data[index]['porn']*100).toFixed(2)}%\n\n`;
             }
             await e.reply(output);
         }
