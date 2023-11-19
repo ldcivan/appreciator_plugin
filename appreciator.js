@@ -63,8 +63,8 @@ export class example extends plugin {
             }
         }
         const num_regex = /^\d+(\.\d+)?$/; // 匹配文本中的数字
-        const match_num = e.msg.match(num_regex);
-        const limit = match_num ? parseFloat(match_num[0]) : 0.6;
+        const num_match = e.msg.match(num_regex);
+        const limit = num_match ? parseFloat(num_match[0]) : 0.6;
         let version= "v2/tag";
         if (e.msg.includes('v1')) {
             version = 'v1/tag';
@@ -100,7 +100,7 @@ export class example extends plugin {
                 url = `https://savor.pro-ivan.cn/api/${version}?limit=${limit}&url=${imageURL}`
             }
             else {
-                const image_dim = match ? parseFloat(match[0]) : 224;
+                const image_dim = num_match ? parseFloat(num_match[0]) : 224;
                 url = `https://savor.pro-ivan.cn/api/${version}?image_dim=${image_dim}&urls=${e.img}`
             }
             const response = await fetch(url, { method: "GET", headers: { 'Content-Type': 'application/json' }, timeout: 10000});
