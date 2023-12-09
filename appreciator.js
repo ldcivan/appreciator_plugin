@@ -150,8 +150,15 @@ export class example extends plugin {
         else {
             try {
                 let output = "";
+                let sorted_keys;
+                const tag_map = {"neutral": "中立内容", "drawings": "绘画内容", "sexy": "不适合内容", "hentai": "动漫色情", "porn": "写实色情"};
                 for(let index = 0; index < result_data.length; index++) {
-                    output += `${index+1}. ${result_data[index]['sexy']+result_data[index]['porn']+result_data[index]['hentai']>ero_threshold?'我超太涩了(//// ^ ////)快撤回别让狗管理看见！':'哼，一般，不要小瞧色图啊！'}\n中立内容：${(result_data[index]['neutral']*100).toFixed(2)}%\n绘画内容：${(result_data[index]['drawings']*100).toFixed(2)}%\n不适合内容：${(result_data[index]['sexy']*100).toFixed(2)}%\n动漫色情：${(result_data[index]['hentai']*100).toFixed(2)}%\n写实色情：${(result_data[index]['porn']*100).toFixed(2)}%\n\n`;
+                    sorted_keys = await this.sortKeys(result_data[index])
+                    output += `${index+1}. ${result_data[index]['sexy']+result_data[index]['porn']+result_data[index]['hentai']>ero_threshold?'我超太涩了(//// ^ ////)快撤回别让狗管理看见！':'哼，一般，不要小瞧色图啊！'}\n`;
+                    for(let rank = 0; rank < sorted_keys.length; rank++) {
+                        output += `${tag_map[sorted_keys[rank]]}：${(result_data[index][sorted_keys[rank]]*100).toFixed(2)}%\n`;
+                    }
+                    output += '\n';
                 }
                 await e.reply(output);
             }
@@ -165,5 +172,15 @@ export class example extends plugin {
     
     async appreciate_help(e) {
         e.reply("1. 回复图片、在消息尾部携带图片或图片链接后（图片优先于链接），使用命令 '#鉴赏' 或 '#无权重鉴赏' 即可获取图片可能包含的tag\n2. 在命令后加0~1之间的浮点数可自定义返回的tag的权重最低值（该值未设定时默认为0.6）\n3. 现在可以在命令中注明要使用的功能模型，现在支持：v1-第一代tag鉴赏 v2-第二代tag鉴赏 nsfw-图片色情程度鉴定，默认值为v2（nsfw可直接用 '#鉴黄'+图片 触发）\n例子：'#无权重鉴赏 v1 0.75' Bot会参考v1模型返回图片的不带权重值的tag，且返回的tag的权重值都是大于0.75的");
+    }
+    
+    async sortKeys(result_data) {
+      const keys = Object.keys(result_data);
+    
+      keys.sort(function(a, b) {
+        return result_data[b] - result_data[a];
+      });
+    
+      return keys;
     }
 }
